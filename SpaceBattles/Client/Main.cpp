@@ -144,42 +144,6 @@ bool SetupDirect3D()
 	material.Diffuse = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);    // set diffuse color to white
 	material.Ambient = D3DXCOLOR(1.0f, 1.0f, 1.0f, 1.0f);    // set ambient color to white
 	g_d9device->SetMaterial(&material);    // set the globably-used material to &material
-
-
-										   //Load textures
-										   /*if (fbxmodel.getTextureName() != "")
-										   {
-										   string InFileName = fbxmodel.getTextureName();
-										   wstring OutFileName(InFileName.length(), L' ');
-										   std::copy(InFileName.begin(), InFileName.end(), OutFileName.begin());
-
-										   D3DXCreateTextureFromFile(g_d9device, OutFileName.c_str(), &g_Texture);
-										   if (g_Texture == NULL)
-										   {
-										   wstring msg = L"Unable to load texture - " + OutFileName;
-										   MessageBox(NULL, msg.c_str(), L"Error!", MB_ICONERROR);
-										   return 0;
-										   }
-										   g_d9device->SetTexture(0, g_Texture);
-										   g_d9device->SetTextureStageState(0, D3DTSS_COLOROP, D3DTOP_MODULATE);
-										   g_d9device->SetTextureStageState(0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
-										   g_d9device->SetTextureStageState(0, D3DTSS_COLORARG2, D3DTA_DIFFUSE);
-										   g_d9device->SetTextureStageState(0, D3DTSS_ALPHAOP, D3DTOP_DISABLE);
-										   g_d9device->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
-										   g_d9device->SetSamplerState(0, D3DSAMP_MINFILTER, D3DTEXF_LINEAR);
-										   g_d9device->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_LINEAR);
-										   }
-
-
-										   //Vertex buffer setup
-										   g_d9device->CreateVertexBuffer(fbxmodel.getVertexArrayAtTime(50).size() * sizeof(D3DVERTEX), 0, D3DFVF_VERTEXPARAMS, D3DPOOL_DEFAULT, &g_d9verbuf, NULL);
-										   if (g_d9verbuf == NULL)
-										   {
-										   MessageBox(NULL, L"Direct3D vertex buffer init error", L"Error!", MB_ICONERROR);
-										   return 0;
-										   }*/
-
-
 										   //Camera setup
 	g_camera.px = 0;
 	g_camera.py = 120;
@@ -192,35 +156,6 @@ bool SetupDirect3D()
 
 	return 1;
 }
-
-
-
-
-//Prepare buffer
-/*bool PrepareData()
-{
-D3DVERTEX* d9VData;
-
-g_d9verbuf->Lock(NULL, NULL, (void **)&d9VData, NULL);
-
-vector<FBXVertex> *verarray = &fbxmodel.getVertexArrayAtTime(g_tick);
-int size = verarray->size();
-
-for (int i = 0; i < size; i++)
-{
-d9VData[i].position = D3DXVECTOR3((*verarray)[i].pos[0], (*verarray)[i].pos[1], (*verarray)[i].pos[2]);
-d9VData[i].normal = D3DXVECTOR3((*verarray)[i].norm[0], (*verarray)[i].norm[1], (*verarray)[i].norm[2]);
-d9VData[i].tu = (*verarray)[i].tu;
-d9VData[i].tv = -(*verarray)[i].tv;
-d9VData[i].color = (*verarray)[i].color;
-}
-
-g_d9verbuf->Unlock();
-
-return 1;
-}*/
-
-
 
 
 //Render func
@@ -246,10 +181,8 @@ void Render()
 
 	g_d9device->BeginScene();
 
-	//PrepareData();
 	g_d9device->SetStreamSource(0, g_d9verbuf, 0, sizeof(D3DVERTEX));
 	g_d9device->SetFVF(D3DFVF_VERTEXPARAMS);
-	//g_d9device->DrawPrimitive(D3DPT_TRIANGLELIST, 0, fbxmodel.getVerticiesCount());
 
 	g_d9device->EndScene();
 
@@ -310,11 +243,6 @@ void MainLoop()
 	POINT p;
 	GetCursorPos(&p);
 	g_camera.ry += D3DXToRadian(400 - p.x);
-	//g_camera.rx += D3DXToRadian(300 - p.y);
-	//g_camera.rz += D3DXToRadian(300 - p.y);// * cos(g_camera.ry);
-	//SetCursorPos(400, 300);
-
-
 
 
 	//Redrer
@@ -335,8 +263,6 @@ void MainLoop()
 //Release
 void Release()
 {
-	//g_Texture->Release();
-	//g_d9verbuf->Release();
 	g_d9device->Release();
 	g_d9->Release();
 }
@@ -429,9 +355,6 @@ HRESULT InitWindow(HINSTANCE hInstance, int nCmdShow)
 
 	ShowWindow(g_hWnd, nCmdShow);
 	UpdateWindow(g_hWnd);
-
-	//ShowCursor(false);
-	//SetCursorPos(400, 300);
 
 	return 1;
 }
