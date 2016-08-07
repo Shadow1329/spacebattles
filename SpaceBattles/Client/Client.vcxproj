@@ -145,10 +145,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CConnectionManager.cpp" />
+    <ClCompile Include="CGameManager.cpp" />
+    <ClCompile Include="CGameObject.cpp" />
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CConnectionManager.h" />
+    <ClInclude Include="CGameManager.h" />
+    <ClInclude Include="CGameObject.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
