@@ -1,4 +1,22 @@
 #include "CConnectionManager.h"
+#include "CGameManager.h"
+
+
+
+
+// Connection manager instance
+CConnectionManager* CConnectionManager::mConnectionManager = nullptr;
+
+
+
+
+// Get instance
+CConnectionManager* CConnectionManager::getInstance()
+{
+	if (!mConnectionManager)
+		mConnectionManager = new CConnectionManager();
+	return mConnectionManager;
+}
 
 
 
@@ -51,65 +69,16 @@ CConnectionManager::~CConnectionManager()
 
 
 //Start of the client
-void CConnectionManager::Start()
+void CConnectionManager::Init()
 {
-	std::string filename = "client_data.txt";
-	std::string buf = "";
-	bool change = false;
+	//Clear queue
+	m_Queue.clear();
 
-	std::cout << "Client mode on" << std::endl;
-
-	//Load user data from file
-	std::ifstream input_f(filename);
-
-	//If file not exists
-	if (input_f.fail())
-	{
-		//Ask user to address of server
-		while (1)
-		{
-			std::cout << "Enter server address ((domain name or ip):port): ";
-			std::getline(std::cin, m_Address);
-			if (m_Address != "") break;
-		}
-
-		//Write data to file
-		std::ofstream fout(filename);
-		fout << m_Address << std::endl;
-		fout.close();
-	}
-
-	//If file exists
-	else
-	{
-		//Read data
-		input_f >> m_Address;
-		input_f.close();
-
-		//Make sure that address of server is right
-		std::cout << "Server address is \"" << m_Address << "\"?" << std::endl;
-		std::cout << "(press Enter to confirm or write new address)" << std::endl;
-		std::getline(std::cin, buf);
-		if (buf != "")
-		{
-			m_Address = buf;
-			change = true;
-		}
-
-		//Write new data to file if smth changed
-		if (change == true)
-		{
-			std::ofstream fout(filename);
-			fout << m_Address << std::endl;
-			fout.close();
-		}
-	}
+	//Set address
+	m_Address = "7.112.201.67:9002";
 
 	//Connect to server
 	Control_Connect("ws://" + m_Address + "/");
-
-	//Start to chat
-	Control_Chat();
 }
 
 
@@ -150,12 +119,12 @@ void CConnectionManager::Control_Disconnect()
 
 
 //Send message
-void CConnectionManager::Control_Send(std::string const & _msg)
+void CConnectionManager::Send(std::string const & _msg)
 {
 	try
 	{
 		//Try to send message
-		m_Client.send(m_Hdl, "msg;" + _msg, websocketpp::frame::opcode::text);
+		m_Client.send(m_Hdl, _msg, websocketpp::frame::opcode::text);
 	}
 	catch (websocketpp::exception const & e)
 	{
@@ -167,43 +136,20 @@ void CConnectionManager::Control_Send(std::string const & _msg)
 
 
 
-//Control of the client
-void CConnectionManager::Control_Chat()
+//Get data
+std::string CConnectionManager::GetData(int _id)
 {
-	std::string input;
-	while (1)
+	std::string data = "none";
+	for (int i = 0; i < m_Queue.size(); i++)
 	{
-		//Wait for user input
-		std::getline(std::cin, input);
-
-		if (m_Connection_Succsesful != false)
-		{
-			//If the command is /quit
-			if (input == "/quit")
-			{
-				//Disconnect from server
-				Control_Disconnect();
-			}
-
-			//If the command is /help
-			else if (input == "/help")
-			{
-				//Show all commans
-				std::cout << "Commands:" << std::endl;
-				std::cout << "/quit - disconnect from server and go to main menu" << std::endl;
-				std::cout << "/help - help with commands:" << std::endl;
-				std::cout << "Other text, that you write - is a message." << std::endl;
-			}
-
-			//If it is message
-			else if (input != "")
-			{
-				//Send message
-				Control_Send(input);
-			}
+		if (m_Queue[i].mID == _id)
+		{	
+			data = m_Queue[i].mData;
+			m_Queue.erase(m_Queue.begin() + i);
+			break;
 		}
-		else break;
 	}
+	return data;
 }
 
 
@@ -230,15 +176,14 @@ void CConnectionManager::Util_WriteLog(std::string _msg)
 //Open(if client succesfully connect to server)
 void CConnectionManager::onOpen(connection_hdl _hdl)
 {
-	std::cout << "Connection established!" << std::endl;
-
 	//Write log
 	Util_WriteLog("Successfully connected to \"" + m_Address + "\".");
 
+	//Create game manager
+	CGameManager::getInstance()->Init();
+
 	try
 	{
-		std::cout << "You can write /help to show all command." << std::endl;
-
 		//Send name to server
 		m_Client.send(_hdl, "hello;", websocketpp::frame::opcode::text);
 
@@ -248,7 +193,6 @@ void CConnectionManager::onOpen(connection_hdl _hdl)
 	catch (websocketpp::exception const & e)
 	{
 		//If name is incorrect - close connection
-		std::cout << "Invalid name. Change name and try again." << std::endl;
 		m_Client.close(m_Hdl, websocketpp::close::status::going_away, "");
 	}
 }
@@ -259,8 +203,6 @@ void CConnectionManager::onOpen(connection_hdl _hdl)
 //Close(if client disconnect from server)
 void CConnectionManager::onClose(connection_hdl _hdl)
 {
-	std::cout << "Closing connection" << std::endl;
-
 	//Set state of connection to false
 	m_Connection_Succsesful = false;
 
@@ -274,8 +216,6 @@ void CConnectionManager::onClose(connection_hdl _hdl)
 //Close(if connection was failed)
 void CConnectionManager::onFail(connection_hdl _hdl)
 {
-	std::cout << "Connection failed!" << std::endl;
-
 	//Set state of connection to false
 	m_Connection_Succsesful = false;
 
@@ -289,9 +229,34 @@ void CConnectionManager::onFail(connection_hdl _hdl)
 //Message(when message recieved)
 void CConnectionManager::onMessage(connection_hdl _hdl, WSClientT::message_ptr _msg)
 {
-	//Show message
-	std::cout << _msg->get_payload() << std::endl;
-
 	//Write log
 	Util_WriteLog(_msg->get_payload());
+
+	int id = 0;
+	std::string message = _msg->get_payload();
+	std::string command = message.substr(0, message.find(';'));
+	message = message.substr(message.find(';') + 1, message.length());
+
+	if (command == "connection_accepted")
+	{
+		id = atoi(message.substr(0, message.length()).c_str());
+		CGameManager::getInstance()->CreatePlayer(id);
+	}
+	else if (command == "create_object")
+	{
+		id = atoi(message.substr(0, message.length()).c_str());
+		CGameManager::getInstance()->CreateObject(id);
+	}
+	else if (command == "update_object")
+	{
+		id = atoi(message.substr(0, message.find(';')).c_str());
+		message = message.substr(message.find(';') + 1, message.length());
+
+		CConnectionData data;
+		data.mID = id;
+		data.mData = message;
+		m_Queue.push_back(data);
+		if (m_Queue.size() > 20)
+			m_Queue.erase(m_Queue.begin());
+	}
 }
