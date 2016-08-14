@@ -10,6 +10,11 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time.hpp>
 
+#include "ParserController.h"
+#include "ParserMessage.h"
+#include "ParserAddNewUser.h"
+#include "Package.h"
+#include "GameLogic.h"
 
 using websocketpp::connection_hdl;
 using websocketpp::lib::placeholders::_1;
@@ -20,11 +25,7 @@ typedef websocketpp::server<websocketpp::config::asio> WSServerT;
 
 
 //Struct of connection data
-struct ConnectionDataT
-{
-	int m_SessionId;		//ID of session
-	std::string m_Name;		//Name of the Client
-};
+
 
 class ConnectionManager
 {
@@ -60,8 +61,10 @@ protected:
 
 
 private:
-	typedef std::map<connection_hdl, ConnectionDataT, std::owner_less<connection_hdl>> ConListT;
+	
 
+
+	ParserController* parserController;
 
 	//WebSocket Server
 	WSServerT m_Server;
@@ -76,7 +79,7 @@ private:
 	websocketpp::lib::shared_ptr<websocketpp::lib::thread> m_Thread;
 
 	//Connections
-	ConListT m_Connections;
+
 	int m_NextSessionId;
 	int m_MaxConnections;
 };

@@ -1,0 +1,11 @@
+﻿  ConnectionManager.cpp
+c:\users\user\spacebattles\spacebattles\spacebattles\server\connectionmanager.cpp(118): warning C4101: e: неиспользованная локальная переменная
+c:\program files (x86)\microsoft visual studio 14.0\vc\include\xutility(2229): warning C4996: 'std::_Copy_impl': Function call with parameters that may be unsafe - this call relies on the caller to check that the passed values are correct. To disable this warning, use -D_SCL_SECURE_NO_WARNINGS. See documentation on how to use Visual C++ 'Checked Iterators'
+  c:\program files (x86)\microsoft visual studio 14.0\vc\include\xutility(2216): note:  см. объявление "std::_Copy_impl"
+  c:\users\user\documents\libs\websocketpp-master\websocketpp\frame.hpp(255): note: см. ссылку на создание экземпляров функции шаблон при компиляции "_OutIt std::copy<uint8_t*,uint8_t*>(_InIt,_InIt,_OutIt)"
+          with
+          [
+              _OutIt=uint8_t *,
+              _InIt=uint8_t *
+          ]
+  Server.vcxproj -> C:\Users\user\spacebattles\spacebattles\SpaceBattles\Debug\Server.exe

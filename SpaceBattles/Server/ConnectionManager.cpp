@@ -1,9 +1,20 @@
 #include "ConnectionManager.h"
+#include "Constant.h"
+#include "ParserCreateObject.h"
+#include "ParserUpdateObject.h"
+ 
 
+int l = 0;
 
 
 ConnectionManager::ConnectionManager()
 {
+	parserController = new ParserController();
+	parserController->setNextParserController(new ParserMessage());
+	parserController->setNextParserController(new ParserAddNewUser());
+	parserController->setNextParserController(new ParserCreateObject());
+	parserController->setNextParserController(new ParserUpdateObject());
+
 
 	//Default server port is 9002
 	m_Port = 9002;
@@ -18,7 +29,7 @@ ConnectionManager::ConnectionManager()
 	m_MaxConnections = 10;
 
 	//Clear connection container
-	m_Connections.clear();
+	//Constant::getInstance()->getM_Connetcions().clear();
 
 	// Configure log messages
 	m_Server.clear_access_channels(websocketpp::log::alevel::all);
@@ -36,6 +47,7 @@ ConnectionManager::ConnectionManager()
 	m_Server.set_open_handler(bind(&ConnectionManager::Handle_Open, this, ::_1));
 	m_Server.set_close_handler(bind(&ConnectionManager::Handle_Close, this, ::_1));
 	m_Server.set_message_handler(bind(&ConnectionManager::Handle_Message, this, ::_1, ::_2));
+	GameLogic::getInstance()->setServer(&m_Server);
 
 	// Creating thread
 	m_Thread = websocketpp::lib::make_shared<websocketpp::lib::thread>(&WSServerT::run, &m_Server);
@@ -128,7 +140,9 @@ void ConnectionManager::Control_Stop()
 	Util_WriteLog("Server was stopped.");
 
 	//Inform everybody about end of connection
-	for (auto it : m_Connections)
+
+	
+	for (auto it : Constant::getInstance()->getM_Connetcions())
 	{
 		m_Server.send(it.first, "[Server]: Server is shutting down. Good buy! :)", websocketpp::frame::opcode::text);
 		m_Server.close(it.first, websocketpp::close::status::blank, "");
@@ -145,7 +159,7 @@ void ConnectionManager::Control_Stop()
 void ConnectionManager::Control_Kick(int _id)
 {
 	//If user with this ID exists
-	for (auto it : m_Connections)
+	for (auto it : Constant::getInstance()->getM_Connetcions())
 	{
 		if (it.second.m_SessionId == _id)
 		{
@@ -196,7 +210,7 @@ void ConnectionManager::Control_ServerMenu()
 		{
 			//Show all connections
 			std::cout << "Connections list:" << std::endl;
-			for (auto it : m_Connections)
+			for (auto it : Constant::getInstance()->getM_Connetcions())
 			{
 				std::cout << "User \"" << it.second.m_Name << "\" with ID = " << it.second.m_SessionId << "." << std::endl;
 			}
@@ -246,7 +260,7 @@ void ConnectionManager::Handle_Open(connection_hdl _hdl)
 	ConnectionDataT data;
 
 	//if there is maximum of connections, abort connection
-	if (m_Connections.size() == m_MaxConnections)
+	if (Constant::getInstance()->getM_Connetcions().size() == m_MaxConnections)
 	{
 		//Inform and close connection
 		m_Server.send(_hdl, "Sorry, the server is full :(. Try again later.", websocketpp::frame::opcode::text);
@@ -260,11 +274,29 @@ void ConnectionManager::Handle_Open(connection_hdl _hdl)
 	else
 	{
 		// Fill data
-		data.m_SessionId = m_NextSessionId++;
+		data.m_SessionId = Constant::getInstance()->getIdForPlayer();
 		data.m_Name = "";
+		//bool g = Constant::getInstance()->getM_Connetcions();
+		Constant::getInstance()->addConnectionHDL(data,_hdl);
+		for (auto it : Constant::getInstance()->getM_Connetcions())
+		{
+			
+			if (Constant::getInstance()->getID(_hdl) != it.second.m_SessionId)
+			{
+				cout << "create_object;" + it.second.m_SessionId << endl;
+				m_Server.send(it.first, "create_object;" + std::to_string(Constant::getInstance()->getID(_hdl)) , websocketpp::frame::opcode::text);
+			}
+			else
+			{
+				cout << "connection_accepted;" + it.second.m_SessionId << endl;
+				//m_Server.send(it.first, "connection_accepted;" + std::to_string(Constant::getInstance()->getID(_hdl)) , websocketpp::frame::opcode::text);
+			}
 
+		}
+		GameLogic::getInstance()->addClient(_hdl, data.m_SessionId);
+		
 		//Attach data to connection
-		m_Connections[_hdl] = data;
+		//auto g = Constant::getInstance()->getM_Connetcions();// [_hdl] = data;
 
 		//Write log
 		Util_WriteLog("Someone try to connect to server, wating for \"hello\" message.");
@@ -275,18 +307,28 @@ void ConnectionManager::Handle_Open(connection_hdl _hdl)
 //Close connection(if client disconnect from server)
 void ConnectionManager::Handle_Close(connection_hdl _hdl)
 {
+	int id = Constant::getInstance()->findAndDelete(_hdl);
 	//If connection exists
-	auto it = m_Connections.find(_hdl);
-	if (it != m_Connections.end())
+	/*auto it = Constant::getInstance()->getM_Connetcions().find(_hdl);
+	if (it != Constant::getInstance()->getM_Connetcions().end())
 	{
-		std::cout << "User \"" << m_Connections[_hdl].m_Name << "\" with ID " << m_Connections[_hdl].m_SessionId << " disconnected." << std::endl;
+		std::cout << "User \"" << Constant::getInstance()->getM_Connetcions()[_hdl].m_Name << "\" with ID " << Constant::getInstance()->getM_Connetcions()[_hdl].m_SessionId << " disconnected." << std::endl;
 
 		//Write log
-		Util_WriteLog("User \"" + m_Connections[_hdl].m_Name + "\" with ID " + std::to_string(m_Connections[_hdl].m_SessionId) + " disconnected.");
+		Util_WriteLog("User \"" + Constant::getInstance()->getM_Connetcions()[_hdl].m_Name + "\" with ID " + std::to_string(Constant::getInstance()->getM_Connetcions()[_hdl].m_SessionId) + " disconnected.");
 
 		//Delecte connection from map
-		m_Connections.erase(_hdl);
+		Constant::getInstance()->getM_Connetcions().erase(_hdl);
+	}*/
+
+	for (auto it : Constant::getInstance()->getM_Connetcions())
+	{
+		if (it.second.m_SessionId != id)
+		{
+			m_Server.send(it.first, "delete_object;" + std::to_string(it.second.m_SessionId), websocketpp::frame::opcode::text);
+		}
 	}
+	GameLogic::getInstance()->deleteClient(_hdl);
 }
 
 
@@ -296,48 +338,68 @@ void ConnectionManager::Handle_Message(connection_hdl _hdl, WSServerT::message_p
 	std::string command = _msg->get_payload().substr(0, _msg->get_payload().find(';'));
 	std::string body = _msg->get_payload().substr(_msg->get_payload().find(';') + 1, _msg->get_payload().length());
 	std::string message;
+	if (command == "connected")
+	{
 
+		UserInformation* user = ControllerFileManager::getInstance()->FindWithID(atoi(body.c_str()));
+
+		if (user != nullptr)
+		{
+			Constant::getInstance()->ReplaceUser(_hdl,user);
+
+		}
+	}
+	message = parserController->parserPackage(new Package(command, body, message,_hdl));
 
 
 	//this is the first command, which sets name of client
-	if (command == "hello")
+	/*if (command == "AddUser")
 	{
-		m_Connections[_hdl].m_Name = body;
+		Constant::getInstance()->getM_Connetcions[_hdl].m_Name = body;
 
-		//Form message
-		message = "User \"" + m_Connections[_hdl].m_Name + "\" connected (ID = " + std::to_string(m_Connections[_hdl].m_SessionId) + ").";
+		//Form 
+		message = "User Add (ID = " + std::to_string(Constant::getInstance()->getIdForPlayer()) + ").";
+
+		//message = "User \"" + m_Connections[_hdl].m_Name + "\" connected (ID = " + std::to_string(Constant::getInstance()->getIdForPlayer()) + ").";
 
 		//Print message
 		std::cout << message << std::endl;
 
 		//Write log
 		Util_WriteLog(message);
-
-		//Send message to everybody
-		for (auto it : m_Connections)
+		std::cout << message << std::endl;
+		//Send message to everybody*/
+	std::cout <<(l++)<< message << std::endl;
+	Util_WriteLog(message);
+	//auto ghj = Constant::getInstance()->getM_Connetcions();
+	if (message != "")
+		for (auto it : Constant::getInstance()->getM_Connetcions())
 		{
-			m_Server.send(it.first, message, websocketpp::frame::opcode::text);
+			 if (command != "hello" &&  Constant::getInstance()->getID(_hdl) != it.second.m_SessionId)
+				m_Server.send(it.first, message, websocketpp::frame::opcode::text);
+			
 		}
-	}
+	
 
 
 
 	//this is command of accepting message
-	else if (command == "msg")
+	/*else if (command == "msg")
 	{
 		//Form message
-		message = "[" + m_Connections[_hdl].m_Name + "](" + std::to_string(m_Connections[_hdl].m_SessionId) + "):" + body;
+		message = "[" + Constant::getInstance()->getM_Connetcions[_hdl].m_Name + "](" + std::to_string(Constant::getInstance()->getM_Connetcions[_hdl].m_SessionId) + "):" + body;
 
 		//Print message
 		std::cout << message << std::endl;
 
 		//Write log
 		Util_WriteLog(message);
-
-		//Send message to everybody
-		for (auto it : m_Connections)
+		*
+		//Send message to everybody*/
+	/*	for (auto it : Constant::getInstance()->getM_Connetcions)
 		{
+			
 			m_Server.send(it.first, message, websocketpp::frame::opcode::text);
-		}
-	}
+		}*/
+	//}
 }

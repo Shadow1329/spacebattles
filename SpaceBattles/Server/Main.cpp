@@ -1,4 +1,5 @@
 #include "ConnectionManager.h"
+#include "Constant.h"
 
 #include <cstdlib>
 #include <iostream>
@@ -8,6 +9,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "ControllerFileManager.h"
 //#include <unistd.h>
 
 
@@ -15,12 +17,19 @@ using namespace std;
 
 void main()
 {
+	ControllerFileManager::getInstance()->getInformationUser();
 
+
+	//ControllerFileManager::getInstance()->AddUserName(new UserInformation(6, "Nikita"));
+	
 	string role_switch = "0";
 
-	//If it was started as app
 	
-		//main menu
+
+
+		//If it was started as app
+
+			//main menu
 		while (role_switch != "3")
 		{
 			if (system("cls")) system("clear");
@@ -58,11 +67,11 @@ void main()
 			{
 				cout << "Good Bye!" << endl;
 			}
-			
-	}
+		}
+	
+}
 
 	
 
 
 
-}

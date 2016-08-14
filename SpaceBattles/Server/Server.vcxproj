@@ -103,10 +103,12 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>C:\Users\user\Documents\Libs\websocketpp-master;C:\Users\user\Documents\Libs\include\boost-1_61;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>C:\Users\user\Documents\Libs\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -145,10 +147,27 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="ConnectionManager.cpp" />
+    <ClCompile Include="Constant.cpp" />
+    <ClCompile Include="ControllerFileManager.cpp" />
+    <ClCompile Include="GameLogic.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="ParserAddNewUser.cpp" />
+    <ClCompile Include="ParserCreateObject.cpp" />
+    <ClCompile Include="ParserMessage.cpp" />
+    <ClCompile Include="ParserUpdateObject.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ConnectionManager.h" />
+    <ClInclude Include="Constant.h" />
+    <ClInclude Include="ControllerFileManager.h" />
+    <ClInclude Include="GameLogic.h" />
+    <ClInclude Include="Package.h" />
+    <ClInclude Include="ParserAddNewUser.h" />
+    <ClInclude Include="ParserController.h" />
+    <ClInclude Include="ParserCreateObject.h" />
+    <ClInclude Include="ParserMessage.h" />
+    <ClInclude Include="ParserUpdateObject.h" />
+    <ClInclude Include="UserInformation.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
